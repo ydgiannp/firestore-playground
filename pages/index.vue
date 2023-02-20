@@ -86,8 +86,8 @@ export default {
       let self = this
       var repolaRef = this.$fire.firestore.collection("reportase-langsung")
       // repolaRef.get()
-      repolaRef.orderBy("publishedDate").get()
-      // repolaRef.where("slug","==","kedua").orderBy("publishedDate").get()
+      repolaRef.orderBy("publisheddate").get()
+      // repolaRef.where("slug","==","kedua").orderBy("publisheddate").get()
         .then((querySnapshot) => {
             querySnapshot.forEach((doc) => {
                 // doc.data() is never undefined for query doc snapshots

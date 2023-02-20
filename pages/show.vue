@@ -2,12 +2,11 @@
   <v-row justify="start">
     <v-col 
       cols="12" 
-      sm="4" 
-      md="4"
+      sm="6" 
+      md="6"
       >
       <v-card
-        class="mx-auto"
-        max-width="344"
+        class=""
         outlined
       >
         <v-list-item three-line>
@@ -18,7 +17,7 @@
             <v-list-item-subtitle>{{ repola.description }}</v-list-item-subtitle>
 
             <div class="text-caption mt-4">
-              {{ Date(repola.publishedDate) }}
+              {{ Date(repola.publisheddate) }}
             </div>
           </v-list-item-content>
         </v-list-item>
@@ -33,34 +32,38 @@
           </v-btn> -->
         </v-card-actions>
       </v-card>
-    </v-col>
-    <v-col cols="12" sm="8" md="6" v-if="isSubmit">
-      <v-card
-        class="mx-auto light--text"
-        prepend-icon="mdi-twitter"
-        title="Twitter"
-        outlined
-      >
-        <template v-slot:prepend>
-          <v-icon size="x-large"></v-icon>
-        </template>
-
-        <v-card-text class="py-2">
-          <v-icon color="green">mdi-check-decagram</v-icon>
-          Repola berhasil masuk ke firestore
+      <v-card class="mt-4">
+        <v-card-title>
+          Tambah Event
+        </v-card-title>
+        <v-card-text>
+          <v-text-field label="Nama Event" variant="outlined" v-model="eventTitle"></v-text-field>
+          <v-textarea label="Deskripsi Event" variant="outlined" v-model="eventDescription"></v-textarea>
         </v-card-text>
-
         <v-card-actions>
-          <v-spacer />
           <v-btn
-            color="blue lighten-2"
-            nuxt
-            @click="submit"
-            block
+            outlined
+            rounded
+            text
+            @click="submitEvent()"
           >
-            Lihat Detail
+            Add
           </v-btn>
         </v-card-actions>
+      </v-card>
+    </v-col>
+    <v-col cols="12" sm="6" md="6">
+      <v-card
+        v-for="list in eventLists"
+        :key="list.id"
+        class="mb-4 blue lighten-4"
+        >
+        <v-card-title>
+          {{ list.data().title }}
+        </v-card-title>
+        <v-card-subtitle>
+          {{ list.data().description }}
+        </v-card-subtitle>
       </v-card>
     </v-col>
   </v-row>
@@ -75,7 +78,13 @@ export default {
       description: '',
       date: ''
     },
+    slug: '',
+    eventTitle: '',
+    eventDescription: '',
     isSubmit: false,
+    unsubscribe: null,
+    unsubscribeEvents: null,
+    eventLists: []
   }),
   methods: {
     submit: function() {
@@ -84,7 +93,7 @@ export default {
     getDocument: function(slug) {
       let self = this
       console.log(slug)
-      var docRef = this.$fire.firestore.collection("reportase-langsung").doc(slug)
+      this.unsubscribe = this.$fire.firestore.collection("reportase-langsung").doc(slug)
       // docRef.get()
       //   .then((doc) => {
       //     self.repola = doc.data()
@@ -92,17 +101,67 @@ export default {
       //   .catch((error) => {
       //       console.log("Error getting documents: ", error)
       //   })
-      docRef.onSnapshot({
+      this.unsubscribe.onSnapshot({
             // Listen for document metadata changes
             includeMetadataChanges: true
         }, (doc) => {
             console.log(doc.data())
             self.repola = doc.data()
         });
+        
+    },
+    getEvents: function(slug) {
+      let self = this
+      console.log(slug)
+      self.unsubscribeEvents = this.$fire.firestore.collection("reportase-langsung")
+        .doc(slug).collection("events").orderBy("publisheddate","desc")
+      // self.unsubscribeEvents.get()
+      //   .then((querySnapshot) => {
+      //     querySnapshot.forEach((doc) => {
+      //         // doc.data() is never undefined for query doc snapshots
+      //         console.log(doc.id, " => ", doc.data())
+      //         self.eventLists.push(doc)
+      //     })
+      //   })
+      //   .catch((error) => {
+      //       console.log("Error getting documents: ", error)
+      //   })
+      self.unsubscribeEvents.onSnapshot((querySnapshot) => {
+        self.eventLists = []
+        querySnapshot.forEach((doc) => {
+          // doc.data() is never undefined for query doc snapshots  
+          self.eventLists.push(doc)
+        })
+      });
+    },
+    submitEvent:  function() {
+      let self = this
+      let newData = this.$fire.firestore.collection('reportase-langsung').doc(this.slug).collection('events').add({
+          title: self.eventTitle,
+          description: self.eventDescription,
+          publisheddate: self.$fireModule.firestore.Timestamp.now()
+      })
+      .then((docRef) => {
+          console.log("Document written with ID: ", docRef.id);
+      })
+      .catch((error) => {
+          console.error("Error adding document: ", error);
+      });
     }
   },
   mounted() {
-    this.getDocument(this.$route.query.id)
+    this.slug = this.$route.query.id
+    this.getDocument(this.slug)
+    this.getEvents(this.slug)
+  },
+  beforeDestroy() {
+    // console.log(this.unsubscribeEvents)
+    if(this.unsubscribe){
+      this.unsubscribe.onSnapshot()
+    }
+    if(this.unsubscribeEvents){
+      this.unsubscribeEvents.onSnapshot()
+    }
   }
 }
 </script>

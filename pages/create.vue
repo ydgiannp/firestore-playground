@@ -1,5 +1,5 @@
 <template>
-  <v-row justify="left">
+  <v-row justify="start">
     <v-col cols="12" sm="8" md="6">
       <v-card>
         <v-card-title class="headline">
@@ -50,7 +50,7 @@
           <v-btn
             color="blue lighten-2"
             nuxt
-            @click="submit"
+            :to="'show?id='+docId"
             block
           >
             Lihat Detail
@@ -62,15 +62,33 @@
 </template>
 
 <script>
+var slugify = require('slugify')
 export default {
   name: 'CreatePage',
   data: () => ({
     title: '',
     description: '',
-    isSubmit: false
+    isSubmit: false,
+    docId: ''
   }),
   methods: {
     submit: function() {
+      let slug = slugify(this.title)
+      let newData = this.$fire.firestore.collection('reportase-langsung').doc(slug)
+      let self = this
+      newData.set({
+        title: self.title,
+        description: self.description,
+        slug: slug,
+        publisheddate: self.$fireModule.firestore.Timestamp.now()
+      })
+      .then(() => {
+          self.docId = slug
+          console.log("Document successfully written!");
+      })
+      .catch((error) => {
+          console.error("Error writing document: ", error);
+      });
       this.isSubmit = true
     }
 
