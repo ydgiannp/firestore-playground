@@ -94,39 +94,27 @@ export default {
       let self = this
       console.log(slug)
       this.unsubscribe = this.$fire.firestore.collection("reportase-langsung").doc(slug)
-      // docRef.get()
-      //   .then((doc) => {
-      //     self.repola = doc.data()
-      //   })
-      //   .catch((error) => {
-      //       console.log("Error getting documents: ", error)
-      //   })
-      this.unsubscribe.onSnapshot({
-            // Listen for document metadata changes
-            includeMetadataChanges: true
-        }, (doc) => {
-            console.log(doc.data())
-            self.repola = doc.data()
-        });
+      this.unsubscribe.get()
+        .then((doc) => {
+          self.repola = doc.data()
+        })
+        .catch((error) => {
+            console.log("Error getting documents: ", error)
+        })
+      // this.unsubscribe.onSnapshot({
+      //       // Listen for document metadata changes
+      //       includeMetadataChanges: true
+      //   }, (doc) => {
+      //       console.log(doc.data())
+      //       self.repola = doc.data()
+      //   });
         
     },
     getEvents: function(slug) {
       let self = this
       console.log(slug)
       self.unsubscribeEvents = this.$fire.firestore.collection("reportase-langsung")
-        .doc(slug).collection("events").orderBy("publisheddate","desc")
-      // self.unsubscribeEvents.get()
-      //   .then((querySnapshot) => {
-      //     querySnapshot.forEach((doc) => {
-      //         // doc.data() is never undefined for query doc snapshots
-      //         console.log(doc.id, " => ", doc.data())
-      //         self.eventLists.push(doc)
-      //     })
-      //   })
-      //   .catch((error) => {
-      //       console.log("Error getting documents: ", error)
-      //   })
-      self.unsubscribeEvents.onSnapshot((querySnapshot) => {
+        .doc(slug).collection("events").orderBy("publisheddate","desc").onSnapshot((querySnapshot) => {
         self.eventLists = []
         querySnapshot.forEach((doc) => {
           // doc.data() is never undefined for query doc snapshots  
